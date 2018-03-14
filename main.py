@@ -1,6 +1,6 @@
-import os
 import logging
 
+from environs import Env
 from aiohttp import web
 from server import app
 
@@ -8,9 +8,12 @@ logging.basicConfig(format='[%(asctime)s] [%(pathname)s:%(lineno)d] %(levelname)
 log = logging.getLogger('application')
 log.setLevel(logging.DEBUG)
 
+env = Env()
+env.read_env()
+
 
 def main():
-    port = int(os.environ.get('PORT', 8080))
+    port = env.int('PORT')
     log.info('Starting application on %s', port)
     web.run_app(app, port=port)
 
