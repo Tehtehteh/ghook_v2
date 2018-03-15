@@ -1,1 +1,6 @@
+slackclient
 aiohttp
+pprint
+sqlalchemy
+configparser
+pymysql3
