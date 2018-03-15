@@ -3,15 +3,22 @@ import logging
 from aiohttp import web
 from aiohttp.web_response import json_response
 
+from .lib import Dispatcher
+
 log = logging.getLogger('application')
 
 
-async def github_hook(_):  # todo
+async def github_hook(request):
+    request_json = await request.json()
+    action = request_json.get('action')
+    if not action:
+        log.warning('Received no action in request payload.')
+        return json_response({'ok': False})
+    Dispatcher.dispatch_action(action, payload=request_json)
     return json_response({'ok': True})
 
 
 async def health(_):
-    log.info('Heyaa!')
     return json_response({'ok': True})
 
 app = web.Application()
