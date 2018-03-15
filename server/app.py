@@ -15,5 +15,5 @@ async def health(_):
     return json_response({'ok': True})
 
 app = web.Application()
-app.router.add_post('/githook', github_hook)
+app.router.add_post('/poke', github_hook)
 app.router.add_get('/_healthz', health)
