@@ -66,17 +66,20 @@ class Command:
         user_slack_id = self.payload.get('user_id').pop()
 
         user = Session.query(User).filter_by(slack_id=user_slack_id).first()
+        msg = {
+            'text': ''
+        }
         if not user:
-            return f'You are not registered here'
+            return attach_message(msg, 'You are not registered here')
         repos = Session.query(GithubRepo).filter(GithubRepo.subscribed_user_id == user.id,
                                                  GithubRepo.repo_url.like(github_repo)).all()
         if not repos:
-            return f'You are not subscribed to this repository {github_repo}'
+            return attach_message(msg, f'You are not subscribed to this repository {github_repo}')
         log.info('Unsubscribe %s to %s', self.payload.get('user_name', []).pop(), github_repo)
 
         Session.delete(repos.pop())
         Session.commit()
-        return f'Successfully unsubscribe to {github_repo}'
+        return attach_message(msg, 'Successfully unsubscribed from {github_repo}', color='#47a450')
 
     @Pipelined(['add_poop'])
     def signin(self):
@@ -141,8 +144,8 @@ class Command:
         for reviewer in reviewers:
             github_username = reviewer['login']
             # todo check if user is subscribed
-            user = Session.query(User).filter_by(github_username=github_username).one()
-
+            user = Session.query(User).filter_by(github_username=github_username).all()
+            user = user.pop()
             dm_id = user.slack_dm_id
             if not user:
                 log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
