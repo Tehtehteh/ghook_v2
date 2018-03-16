@@ -38,15 +38,10 @@ class SlackBot:
         # self.slack_client.api_call('')
 
     @classmethod
-    def send_notification(cls, dm_id, message):
-        log.info('Trying to send notification to %i, msg: %s', dm_id, message)
-        data = {
-            'channel': dm_id,
-            'text': message,
-            'as_user': False
-        }
-        res = cls.slack_client.api_call('chat.postMessage', **data)
+    def send_notification(cls, **message):
+        log.info('Trying to send notification msg: %s', message)
+        res = cls.slack_client.api_call('chat.postMessage', **message)
         if not res['ok']:
-            log.error('Error sending notification to %i', dm_id)
+            log.error('Error sending notification to %i', message)
         else:
-            log.info('Successfully sent notification to %i', dm_id)
+            log.info('Successfully sent notification to %i', message)
