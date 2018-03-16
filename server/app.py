@@ -30,8 +30,8 @@ async def slack_command(request):
     payload = await request.text()
     result = Dispatcher.dispatch_action(action=action, payload=payload)
     if not result:
-        return Response(body="Error!!")
-    return Response(body=result)
+        return Response(body='Error!!')
+    return json_response(result)
 
 
 async def health(_):

@@ -8,6 +8,8 @@ from database import Session, User, GithubRepo
 from server.pipeline import Pipelined
 from slackbot.bot import SlackBot
 
+from .utils import attach_message
+
 log = logging.getLogger('application')
 
 
@@ -35,17 +37,20 @@ class Command:
         github_repo = github_repo.rstrip('>').lstrip('<')
         user_slack_id = self.payload.get('user_id').pop()
         user = Session.query(User).filter_by(slack_id=user_slack_id).first()
+        msg = {
+            'text': None,
+        }
         if not user:
-            return f'You must first register via /signin %your_github_username%'
+            return attach_message(msg, 'You must first register via /signin %your_github_username%')
         repos = Session.query(GithubRepo).filter(GithubRepo.subscribed_user_id == user.id,
                                                  GithubRepo.repo_url.like(github_repo)).all()
         if repos:
-            return f'You are already subscribed to this repository {github_repo}'
+            return attach_message(msg, f'You are already subscribed to this repository {github_repo}')
         log.info('Subscribing %s to %s', self.payload.get('user_name', []).pop(), github_repo)
         repo = GithubRepo(subscribed_user_id=user.id, repo_url=github_repo)
         Session.add(repo)
         Session.commit()
-        return f'Successfully subscribed to {github_repo}'
+        return attach_message(msg, f'Successfully subscribed to {github_repo}', color='#47a450')
 
     @Pipelined(['add_poop'])
     def signin(self):
@@ -57,9 +62,13 @@ class Command:
         Session.flush(User)
         Session.commit()
         user_id = self.payload.get('user_id')
+        msg = {
+            'text': None
+        }
         if not user_id:
-            log.error('User id is not present in payload @ signin action')
-            return
+            err = 'User id is not present in payload @ signin action'
+            log.error(err)
+            return attach_message(msg, err)
         github_username = self.payload.get('text')
         if isinstance(github_username, list) and len(github_username) == 1:
             github_username, = github_username
@@ -70,27 +79,28 @@ class Command:
             res = requests.get(url)
             if res.status_code == 404:  # todo back in slack with error
                 log.error('Github user %s not found.', github_username)
-                return f'No such github user: {github_username}.'
+                return attach_message(msg, f'No such github user: {github_username}.')
             user_slack_id = self.payload.get('user_id')
             if isinstance(user_slack_id, list) and len(user_slack_id) == 1:
                 user_slack_id, = user_slack_id
             else:
                 log.error('Error parsing slack user id with payload: %s', self.payload)
-                return "Error parsing your slack user id -_-"
+                return attach_message(msg, f'Error parsing your slack user id -_-')
             user = Session.query(User.slack_id).filter_by(slack_id=user_slack_id).first()
             if user:
                 log.warning('User %s is already registered in database with github username %s',
                             user.slack_id, github_username)
-                return f'You have been already registered with this github username: {github_username}'
+                return attach_message(msg,
+                                      f'You have been already registered with this github username: {github_username}')
             log.info('Registering new user in our database')
             user = User(github_username=github_username, slack_id=user_slack_id, slack_username=slack_username)
             log.info('Successfully registered new user %r', user)
             Session.add(user)
             Session.commit()
-            return f'Successfully registered you as {github_username}.'
+            return attach_message(msg, f'Successfully registered you as {github_username}.', color='#47a450')
         else:
             log.error('Error parsing github username')
-            return f'Error parsing {self.payload.get("text")}'
+            return attach_message(msg, f'error parsing {self.payload.get("text")}')
 
     @Pipelined(['add_poop'])
     def review_requested(self):
