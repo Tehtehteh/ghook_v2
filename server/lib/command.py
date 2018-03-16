@@ -30,6 +30,12 @@ class Command:
     def closed(self):
         pass
 
+    def get_user(self):
+        pass
+
+    def get_repo(self):
+        pass
+
     @Pipelined(['add_poop', 'add_poop'])
     def subscribe(self):
         self.payload = parse.parse_qs(self.payload)
@@ -47,10 +53,30 @@ class Command:
         if repos:
             return attach_message(msg, f'You are already subscribed to this repository {github_repo}')
         log.info('Subscribing %s to %s', self.payload.get('user_name', []).pop(), github_repo)
+
         repo = GithubRepo(subscribed_user_id=user.id, repo_url=github_repo)
         Session.add(repo)
         Session.commit()
         return attach_message(msg, f'Successfully subscribed to {github_repo}', color='#47a450')
+
+    def unsubscribe(self):
+        self.payload = parse.parse_qs(self.payload)
+        github_repo = self.payload.get('text').pop()
+        github_repo = github_repo.rstrip('>').lstrip('<')
+        user_slack_id = self.payload.get('user_id').pop()
+
+        user = Session.query(User).filter_by(slack_id=user_slack_id).first()
+        if not user:
+            return f'You are not registered here'
+        repos = Session.query(GithubRepo).filter(GithubRepo.subscribed_user_id == user.id,
+                                                 GithubRepo.repo_url.like(github_repo)).all()
+        if not repos:
+            return f'You are not subscribed to this repository {github_repo}'
+        log.info('Unsubscribe %s to %s', self.payload.get('user_name', []).pop(), github_repo)
+
+        Session.delete(repos.pop())
+        Session.commit()
+        return f'Successfully unsubscribe to {github_repo}'
 
     @Pipelined(['add_poop'])
     def signin(self):
