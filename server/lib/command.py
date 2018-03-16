@@ -38,7 +38,7 @@ class Command:
         user_slack_id = self.payload.get('user_id').pop()
         user = Session.query(User).filter_by(slack_id=user_slack_id).first()
         msg = {
-            'text': None,
+            'text': '',
         }
         if not user:
             return attach_message(msg, 'You must first register via /signin %your_github_username%')
@@ -63,7 +63,7 @@ class Command:
         Session.commit()
         user_id = self.payload.get('user_id')
         msg = {
-            'text': None
+            'text': ''
         }
         if not user_id:
             err = 'User id is not present in payload @ signin action'
@@ -114,8 +114,8 @@ class Command:
         reviewers = self.payload['pull_request']['requested_reviewers']
         for reviewer in reviewers:
             github_username = reviewer['login']
-
-            user = Session.query(User).filter_by(github_username=github_username).one()  # todo check if user is subscribed
+            # todo check if user is subscribed
+            user = Session.query(User).filter_by(github_username=github_username).one()
 
             dm_id = user.slack_dm_id
             if not user:
