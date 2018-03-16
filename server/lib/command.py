@@ -79,7 +79,7 @@ class Command:
 
         Session.delete(repos.pop())
         Session.commit()
-        return attach_message(msg, 'Successfully unsubscribed from {github_repo}', color='#47a450')
+        return attach_message(msg, f'Successfully unsubscribed from {github_repo}', color='#47a450')
 
     @Pipelined(['add_poop'])
     def signin(self):
