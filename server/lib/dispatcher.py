@@ -3,7 +3,7 @@ import logging
 from .command import Command
 
 
-log = logging.getLogger('Application')
+log = logging.getLogger('application')
 
 
 class Dispatcher:
