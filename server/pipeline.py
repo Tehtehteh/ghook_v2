@@ -7,8 +7,8 @@ class Pipeline:
 
     @classmethod
     def add_poop(cls, msg):
-        if 'text' in msg:
-            msg += ':poop:'
+        if 'text' in msg and isinstance(msg, dict):
+            msg['text'] += ' :poop:'
         elif isinstance(msg, str):
             msg += ' :poop:'
         return msg

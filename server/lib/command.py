@@ -5,7 +5,7 @@ from urllib import parse
 
 import requests
 
-from database import Session, User
+from database import Session, User, GithubRepo
 from server.pipeline import Pipelined
 from slackbot.bot import SlackBot
 
@@ -28,6 +28,25 @@ class Command:
 
     def closed(self):
         pass
+
+    @Pipelined(['add_poop', 'add_poop'])
+    def subscribe(self):
+        self.payload = parse.parse_qs(self.payload)
+        github_repo = self.payload.get('text').pop()
+        github_repo = github_repo.rstrip('>').lstrip('<')
+        user_slack_id = self.payload.get('user_id').pop()
+        user = Session.query(User).filter_by(slack_id=user_slack_id).first()
+        if not user:
+            return f'You must first register via /signin %your_github_username%'
+        repos = Session.query(GithubRepo).filter(GithubRepo.subscribed_user_id == user.id,
+                                                 GithubRepo.repo_url.like(github_repo)).all()
+        if repos:
+            return f'You are already subscribed to this repository {github_repo}'
+        log.info('Subscribing %s to %s', self.payload.get('user_name', []).pop(), github_repo)
+        repo = GithubRepo(subscribed_user_id=user.id, repo_url=github_repo)
+        Session.add(repo)
+        Session.commit()
+        return f'Successfully subscribed to {github_repo}'
 
     @Pipelined(['add_poop'])
     def signin(self):
@@ -74,7 +93,7 @@ class Command:
             log.error('Error parsing github username')
             return f'Error parsing {self.payload.get("text")}'
 
-    @Pipelined(['append_poop'])
+    @Pipelined(['add_poop'])
     def review_requested(self):
         """
         Function which handles review_requested action from GitHub API.
@@ -82,15 +101,22 @@ class Command:
         """
         Session.flush()
         pull_request_url = self.payload['pull_request']['html_url']
+        repo_full_url = self.payload['repository']['html_url']
         reviewer, = self.payload['pull_request']['requested_reviewers']
         github_username = reviewer['login']
-        if not Session.is_active:
-            log.warning('Fucking database...')
-            Session.refresh()
+
         user = Session.query(User).filter_by(github_username=github_username).one()  # todo check if user is subscribed
+
         dm_id = user.slack_dm_id
         if not user:
             log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
+
+        repo = Session.query(GithubRepo).filter(GithubRepo.repo_url == repo_full_url,
+                                                GithubRepo.subscribed_user_id == user.id).one()
+        if not repo:
+            log.warning('User is not subscribed for this repository')
+            return
+
         text = f'<@{user.slack_id}>, please check PR: {pull_request_url}'
         if not dm_id:
             dm_id = SlackBot.create_dm_id(user)
@@ -98,7 +124,7 @@ class Command:
             Session.commit()
             log.info('Successfully set new dm id for user %s', User)
         msg = {
-            'dm_id': dm_id,
+            'channel': dm_id,
             'text': text,
             'as_user': False  # todo Variable?
         }
