@@ -2,8 +2,6 @@ import pprint
 import logging
 import slackclient
 
-from database import Session
-
 log = logging.getLogger('application')
 
 

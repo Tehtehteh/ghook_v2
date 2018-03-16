@@ -102,30 +102,31 @@ class Command:
         Session.flush()
         pull_request_url = self.payload['pull_request']['html_url']
         repo_full_url = self.payload['repository']['html_url']
-        reviewer, = self.payload['pull_request']['requested_reviewers']
-        github_username = reviewer['login']
+        reviewers = self.payload['pull_request']['requested_reviewers']
+        for reviewer in reviewers:
+            github_username = reviewer['login']
 
-        user = Session.query(User).filter_by(github_username=github_username).one()  # todo check if user is subscribed
+            user = Session.query(User).filter_by(github_username=github_username).one()  # todo check if user is subscribed
 
-        dm_id = user.slack_dm_id
-        if not user:
-            log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
+            dm_id = user.slack_dm_id
+            if not user:
+                log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
 
-        repo = Session.query(GithubRepo).filter(GithubRepo.repo_url == repo_full_url,
-                                                GithubRepo.subscribed_user_id == user.id).one()
-        if not repo:
-            log.warning('User is not subscribed for this repository')
-            return
+            repo = Session.query(GithubRepo).filter(GithubRepo.repo_url == repo_full_url,
+                                                    GithubRepo.subscribed_user_id == user.id).one()
+            if not repo:
+                log.warning('User is not subscribed for this repository')
+                return
 
-        text = f'<@{user.slack_id}>, please check PR: {pull_request_url}'
-        if not dm_id:
-            dm_id = SlackBot.create_dm_id(user)
-            user.slack_dm_id = dm_id
-            Session.commit()
-            log.info('Successfully set new dm id for user %s', User)
-        msg = {
-            'channel': dm_id,
-            'text': text,
-            'as_user': False  # todo Variable?
-        }
-        return msg
+            text = f'<@{user.slack_id}>, please check PR: {pull_request_url}'
+            if not dm_id:
+                dm_id = SlackBot.create_dm_id(user)
+                user.slack_dm_id = dm_id
+                Session.commit()
+                log.info('Successfully set new dm id for user %s', User)
+            msg = {
+                'channel': dm_id,
+                'text': text,
+                'as_user': False  # todo Variable?
+            }
+            return msg
