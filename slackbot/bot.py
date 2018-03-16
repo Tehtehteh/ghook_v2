@@ -23,10 +23,10 @@ class SlackBot:
 
     @classmethod
     def create_dm_id(cls, user):
-        log.info('Trying to create new DM for slack_user_id: %i', user.slack_id)
+        log.info('Trying to create new DM for slack_user_id: %s', user.slack_id)
         res = cls.slack_client.api_call('conversations.open', users=user.slack_id)
         if not res['ok']:
-            log.error('Error creating DM for slack_user_id: %i', user.slack_id)
+            log.error('Error creating DM for slack_user_id: %s', user.slack_id)
             raise Exception(f'Error creating DM for slack_user_id: {user.slack_id}')
         else:
             dm_id = res['channel']['id']
@@ -42,6 +42,6 @@ class SlackBot:
         log.info('Trying to send notification msg: %s', message)
         res = cls.slack_client.api_call('chat.postMessage', **message)
         if not res['ok']:
-            log.error('Error sending notification to %i', message)
+            log.error('Error sending notification. %s. Error: %s', message, res['error'])
         else:
-            log.info('Successfully sent notification to %i', message)
+            log.info('Successfully sent notification. %s', message)
