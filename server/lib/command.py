@@ -145,10 +145,11 @@ class Command:
             github_username = reviewer['login']
             # todo check if user is subscribed
             user = Session.query(User).filter_by(github_username=github_username).all()
-            user = user.pop()
-            dm_id = user.slack_dm_id
+            user = user.pop() if len(user) else None
             if not user:
                 log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
+                continue
+            dm_id = user.slack_dm_id
 
             repo = Session.query(GithubRepo).filter(GithubRepo.repo_url == repo_full_url,
                                                     GithubRepo.subscribed_user_id == user.id).one()

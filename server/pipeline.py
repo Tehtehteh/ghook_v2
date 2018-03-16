@@ -21,7 +21,7 @@ class Pipelined:
     def __call__(self, func):
         def wrapped(*args, **kwargs):
             msg = func(*args, **kwargs)
-            if self.pipelines:
+            if self.pipelines and msg:
                 for pipeline in self.pipelines:
                     pipelined_func = getattr(Pipeline, pipeline)
                     if callable(pipelined_func):
