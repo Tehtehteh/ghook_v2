@@ -1,7 +1,6 @@
-from sqlalchemy.orm import Session as SqlAlchemySession
+from database.models import User, Repository
+from .engine import engine, meta
 
-from database.models import Base, User, GithubRepo
-from .engine import Engine
 
-Base.metadata.create_all(Engine)
-Session = SqlAlchemySession(bind=Engine, expire_on_commit=True)
+def init():
+    meta.create_all(checkfirst=True)

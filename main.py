@@ -18,6 +18,7 @@ def main():
     if not token:
         exit(1)
     SlackBot.init(token)
+    database.init()
     port = os.environ.get('PORT', 8080)
     log.info('Starting application on %s', port)
     web.run_app(app, port=port)

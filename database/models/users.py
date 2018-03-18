@@ -1,19 +1,17 @@
-from sqlalchemy import Column, Integer, String
+import sqlalchemy as sa
 
-from .base import Base
+from ..engine import meta
 
 
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
+User = sa.Table(
+    'users', meta,
 
-    slack_id = Column(String(10), default=None)
-    slack_username = Column(String(100), default=None)
-    slack_dm_id = Column(String(100), default=None)
+    sa.Column('id', sa.Integer),
+    sa.Column('slack_id', sa.CHAR(32), unique=True),
+    sa.Column('slack_username', sa.CHAR(100), default=None),
+    sa.Column('slack_dm_id', sa.CHAR(32), unique=True),
+    sa.Column('github_username', sa.CHAR(100), default=None, unique=True),
+    sa.Column('github_email', sa.CHAR(100), default=None),
 
-    github_username = Column(String(100), default=None)
-    github_email = Column(String(100), default=None)
-
-    def __repr__(self):
-        return f'<User obj id={self.id}, slack_id={self.slack_id} '\
-               f'slack_dm_id={self.slack_dm_id}, github_username={self.github_username}>'
+    sa.PrimaryKeyConstraint('id', name='users_id')
+)

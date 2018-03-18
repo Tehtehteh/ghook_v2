@@ -9,19 +9,22 @@ from .lib import Dispatcher
 log = logging.getLogger('application')
 
 
+@SlackBot.reportable
 async def github_hook(request):
     request_json = await request.json()
     action = request_json.get('action')
     if not action:
         log.warning('Received no action in request payload.')
         return json_response({'ok': False})
-    result = Dispatcher.dispatch_action(action, payload=request_json)
-    if result:
-        SlackBot.send_notification(**result)
-        return json_response({'ok': True})
-    return json_response({'ok': False})
+    messages = Dispatcher.dispatch_action(action, payload=request_json)
+    if not messages:
+        return json_response({'ok': False})
+    for msg in messages:
+        SlackBot.send_notification(**msg)
+    return json_response({'ok': True})
 
 
+@SlackBot.reportable
 async def slack_command(request):
     action = request.match_info.get('slack_command', None)
     if not action:
