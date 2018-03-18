@@ -11,7 +11,7 @@ log = logging.getLogger('application')
 
 @SlackBot.reportable
 async def github_hook(request):
-    request_json = await request.json()
+    request_json = await request.json()  # todo support both application/json and www/url-form-encoded headers -_-
     action = request_json.get('action')
     if not action:
         log.warning('Received no action in request payload.')
