@@ -5,4 +5,3 @@ sqlalchemy
 configparser
 pymysql3
 requests
-newrelic
