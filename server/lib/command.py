@@ -6,6 +6,7 @@ import requests
 import sqlalchemy as sa
 
 from database import User, Repository
+from repositories import UserRepository
 from server.pipeline import Pipelined
 from slackbot.bot import SlackBot
 
@@ -43,7 +44,7 @@ class Command:
         github_repo = self.payload.get('text').pop()
         github_repo = github_repo.rstrip('>').lstrip('<')
         user_slack_id = self.payload.get('user_id').pop()
-        user = sa.select([User]).where(User.c.slack_id == user_slack_id).execute().fetchone()
+        user = UserRepository.get_user_by_slack_id(user_slack_id)
         msg = {
             'text': '',
         }
@@ -69,7 +70,7 @@ class Command:
             'text': ''
         }
 
-        user = sa.select([User]).where(User.c.slack_id == user_slack_id).execute().fetchone()
+        user = UserRepository.get_user_by_slack_id(user_slack_id)
 
         if not user:
             return attach_message(msg, 'You are not registered here')
@@ -119,20 +120,23 @@ class Command:
             else:
                 log.error('Error parsing slack user id with payload: %s', self.payload)
                 return attach_message(msg, f'Error parsing your slack user id -_-')
-            user = sa.select([User]).where(User.c.slack_id == user_slack_id).execute().fetchone()
+            user = UserRepository.get_user_by_slack_id(user_slack_id)
             if user:
                 log.warning('User %s is already registered in database with github username %s',
                             user.slack_id, github_username)
                 return attach_message(msg,
                                       f'You have been already registered with this github username: {github_username}')
             log.info('Registering new user in our database')
-            User.insert().values(
-                {
-                    'github_username': github_username.lower(),  # normalize github username...
-                    'slack_username': slack_username,
-                    'slack_id': user_slack_id
-                }
-            ).execute()
+            UserRepository.create_new_user(**{'github_username': github_username.lower(),
+                                              'slack_username': slack_username,
+                                              'slack_id': user_slack_id})
+            # User.insert().values(
+            #     {
+            #         'github_username': github_username.lower(),  # normalize github username...
+            #         'slack_username': slack_username,
+            #         'slack_id': user_slack_id
+            #     }
+            # ).execute()
             log.info('Successfully registered %s as %s', slack_username, github_username)
             return attach_message(msg, f'Successfully registered you as {github_username}.', color='#47a450')
         else:
@@ -152,7 +156,7 @@ class Command:
         messages = []
         for reviewer in reviewers:
             github_username = reviewer['login']
-            user = sa.select([User]).where(User.c.github_username == github_username.lower()).execute().fetchone()
+            user = UserRepository.get_user_by_github_username(github_username)
 
             if not user:
                 log.warning('Couldn\'t find user in our database with this github email: %s', github_username)
