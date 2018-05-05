@@ -158,7 +158,13 @@ def create_web_app():
     setup_middlewares(app)
 
     # Handle debug-only request-handlers
-    if bool(os.environ.get('DEBUG', False)):
+    debug = os.environ.get('DEBUG', False)
+    if isinstance(debug, str):
+        if debug.isdigit():
+            debug = debug != '0'
+        else:
+            debug = debug.lower() != 'false'
+    if debug:
         app.router.add_route(method='GET', path='/test', handler=test_slack)
         app.router.add_route(method='POST', path='/test', handler=test_slack)
     return app

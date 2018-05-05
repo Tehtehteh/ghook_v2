@@ -2,8 +2,7 @@ import pytz
 
 from datetime import datetime
 
-from .base_action import BaseAction
-
+# from .base_action import BaseAction
 
 class GithubActionFactory(object):
 
@@ -38,8 +37,7 @@ class GithubActionFactory(object):
         else:
             return None
 
-
-class ReviewRequestedAction(BaseAction):
+class ReviewRequestedAction(object):
 
     def __init__(self, *, github_username, github_avatar, github_username_link,
                  title, pr_url, reviewer, message, created_at, branch_from,
@@ -66,7 +64,7 @@ class ReviewRequestedAction(BaseAction):
             return int(pytz.UTC.localize(datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ')).timestamp())
 
         return {
-            'text': f'<@U7N50A3NX>, please check pull request submitted by {self.github_username}',
+            'text': f'<@{user_slack_id}>, please check pull request submitted by {self.github_username}',
             'attachments': [
                 {
                     'color': '#0366d6',
