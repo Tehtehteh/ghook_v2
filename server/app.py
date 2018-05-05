@@ -41,13 +41,14 @@ async def new_github_hook(request):
     if not action:
         log.warning('Received unknown action from GitHub: %s', parsed_request.get('action'))
         return json_response({'ok': True})
-    user = UserRepository.get_user_by_github_username(action.reviewer)
+    log.info('Trying to find user...')
+    user = UserRepository.get_user_by_github_username(action.reviewer['login'])
     if not user:
         log.warning('Couldn\'t find user in our database with this github email: %s', action.reviewer)
         return json_response({'ok': True})
     dm_id = user.slack_dm_id
 
-    repo = sa.select([Repository]).where(sa.and_(Repository.c.repo_url == action.pr_url,
+    repo = sa.select([Repository]).where(sa.and_(Repository.c.repo_url == action.repo_url,
                                                  Repository.c.subscribed_user_id == user.id)).execute().fetchone()
 
     if not repo:
@@ -60,7 +61,7 @@ async def new_github_hook(request):
 
         log.info('Successfully set new dm id for user %s', User)
 
-    message = action.to_slack_message(dm_id)
+    message = action.to_slack_message(user.slack_id)
     error = await request.app['slack_manager'].send(channel=dm_id,
                                                     **message)
     if error:

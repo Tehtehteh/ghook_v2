@@ -32,6 +32,7 @@ class GithubActionFactory(object):
                 'changed_files': request['pull_request']['changed_files'],
                 'additions': request['pull_request']['additions'],
                 'deletions': request['pull_request']['deletions'],
+                'repo_url': request['repository']['html_url']
             }
             return ReviewRequestedAction(**params)
         else:
@@ -41,7 +42,7 @@ class ReviewRequestedAction(object):
 
     def __init__(self, *, github_username, github_avatar, github_username_link,
                  title, pr_url, reviewer, message, created_at, branch_from,
-                 branch_to, changed_files, additions, deletions, color='#3ae34f'):
+                 branch_to, changed_files, additions, deletions, repo_url, color='#3ae34f'):
         self.github_username = github_username
         self.github_avatar = github_avatar
         self.github_username_link = github_username_link
@@ -56,9 +57,9 @@ class ReviewRequestedAction(object):
         self.additions = additions
         self.deletions = deletions
         self.attachment_color = color
+        self.repo_url = repo_url
 
     def to_slack_message(self, user_slack_id):
-        # todo danamic user_slack id
 
         def parse_dtm(x):
             return int(pytz.UTC.localize(datetime.strptime(x, '%Y-%m-%dT%H:%M:%SZ')).timestamp())
