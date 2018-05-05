@@ -69,6 +69,3 @@ def monkey_patch_base_api():
     log.info('Monkey patching library')
     BaseAPI._request = patched_request
     log.info('Done monkey patching library')
-
-
-monkey_patch_base_api()
