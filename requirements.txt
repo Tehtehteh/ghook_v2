@@ -4,6 +4,7 @@ aiohttp
 pprint
 sqlalchemy
 configparser
+pymysql
 requests
 aioslacker
 async_timeout
