@@ -164,7 +164,7 @@ def create_web_app():
     debug = os.environ.get('DEBUG', False)
     if isinstance(debug, str):
         if debug.isdigit():
-            debug = debug != '0'
+            debug = debug == '0'
         else:
             debug = debug.lower() != 'false'
     if debug:
