@@ -16,15 +16,19 @@ class SlackManager(object):
                    parse=None, link_names=None, attachments=None,
                    unfurl_links=None, unfurl_media=None, icon_url=None,
                    icon_emoji=None):
-        async with Slacker(token=self.token) as slacker_client:
-            res = await slacker_client.chat.post_message(channel, text, username, as_user,
-                                                         parse, link_names, attachments,
-                                                         unfurl_links, unfurl_media, icon_url,
-                                                         icon_emoji)
-            """:type: slacker.Response"""
-            if not res.successful:
-                log.error('Error sending message to slack.')
-                return res.error
+        try:
+            async with Slacker(token=self.token) as slacker_client:
+                res = await slacker_client.chat.post_message(channel, text, username, as_user,
+                                                             parse, link_names, attachments,
+                                                             unfurl_links, unfurl_media, icon_url,
+                                                             icon_emoji)
+                """:type: slacker.Response"""
+                if not res.successful:
+                    log.error('Error sending message to slack.')
+                    return res.error
+        except Exception as e:
+            log.error("ERROR: %s", e)
+            raise e
 
     async def create_dm_id(self, slack_user_id):
         async with Slacker(token=self.token) as slacker_client:
