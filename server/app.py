@@ -62,11 +62,13 @@ async def new_github_hook(request):
         log.info('Successfully set new dm id for user %s', User)
 
     message = action.to_slack_message(user.slack_id)
+    log.info('Trying to send message to %s', user.slack_id)
     error = await request.app['slack_manager'].send(channel=dm_id,
                                                     **message)
     if error:
         log.error('Error sending msg to slack: %s', error)
         raise Exception(error)
+    log.info('Successfuly sent message to %s', user.slack_id)
     return json_response({'ok': True, 'error': None})
 
 

@@ -23,6 +23,7 @@ class SlackManager(object):
                                                          icon_emoji)
             """:type: slacker.Response"""
             if not res.successful:
+                log.error('Error sending message to slack.')
                 return res.error
 
     async def create_dm_id(self, slack_user_id):
