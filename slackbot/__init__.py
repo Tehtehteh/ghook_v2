@@ -64,7 +64,11 @@ async def patched_request(self, method, api, **kwargs):
 
 
 def monkey_patch_base_api():
+    import logging
+    log = logging.getLogger('application')
+    log.info('Monkey patching library')
     BaseAPI._request = patched_request
+    log.info('Done monkey patching library')
 
 
 monkey_patch_base_api()

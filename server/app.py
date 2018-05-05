@@ -90,12 +90,12 @@ async def test_slack(request):
 
 @SlackBot.reportable
 async def slack_command(request):
-    parsed_request = await RequestAdapter.parse(request)
-    action = parsed_request.payload.get('slack_command', None)
+    action = request.match_info.get('slack_command', None)
     if not action:
-        log.warning('Got no action from slack.')
+        log.warning('Got no action.')
         return Response(body='Bad action')
-    result = Dispatcher.dispatch_action(action=action, payload=parsed_request.payload)
+    payload = await request.text()
+    result = Dispatcher.dispatch_action(action=action, payload=payload)
     if not result:
         return Response(body='Error!!')
     return json_response(result)
