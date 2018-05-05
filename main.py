@@ -5,8 +5,8 @@ from aiohttp import web
 
 import database
 
-from server import app
-from slackbot.bot import SlackBot
+from server import create_web_app
+from slackbot.bot import SlackBot, SlackManager
 
 logging.basicConfig(format='[%(asctime)s] [%(pathname)s:%(lineno)d] %(levelname)8s: %(message)s')
 log = logging.getLogger('application')
@@ -21,6 +21,7 @@ def main():
     database.init()
     port = os.environ.get('PORT', 8080)
     log.info('Starting application on %s', port)
+    app = create_web_app()
     web.run_app(app, port=port)
 
 

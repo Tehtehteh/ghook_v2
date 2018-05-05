@@ -1,9 +1,38 @@
 import logging
 import slackclient
 
+from aioslacker import Slacker
+
 from aiohttp.web_response import Response
 
 log = logging.getLogger('application')
+
+
+class SlackManager(object):
+    def __init__(self, token):
+        self.token = token
+
+    async def send(self, channel, text=None, username=None, as_user=None,
+                   parse=None, link_names=None, attachments=None,
+                   unfurl_links=None, unfurl_media=None, icon_url=None,
+                   icon_emoji=None):
+        async with Slacker(token=self.token) as slacker_client:
+            res = await slacker_client.chat.post_message(channel, text, username, as_user,
+                                                         parse, link_names, attachments,
+                                                         unfurl_links, unfurl_media, icon_url,
+                                                         icon_emoji)
+            """:type: slacker.Response"""
+            if not res.successful:
+                return res.error
+
+    async def create_dm_id(self, slack_user_id):
+        async with Slacker(token=self.token) as slacker_client:
+            res = await slacker_client.im.open(user=slack_user_id)
+            """:type: slacker.Response"""
+            if not res.successful:
+                log.error(f'Error creating IM id for user: {slack_user_id}. Error: {res.error}.')
+                raise Exception(f'Error creating IM id for user: {slack_user_id}. Error: {res.error}.')
+            return res.body['channel']['id']
 
 
 class SlackBot:
@@ -66,4 +95,5 @@ class SlackBot:
                 }
                 cls.send_notification(**data)
                 return Response(body=None)
+
         return wrapped

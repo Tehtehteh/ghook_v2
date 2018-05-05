@@ -1,3 +1,4 @@
+pytz
 slackclient
 aiohttp
 pprint
@@ -5,3 +6,6 @@ sqlalchemy
 configparser
 pymysql3
 requests
+aioslacker
+async_timeout
+slacker

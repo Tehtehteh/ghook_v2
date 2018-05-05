@@ -40,7 +40,6 @@ class Command:
 
     @Pipelined(['add_poop', 'add_poop'])
     def subscribe(self):
-        self.payload = parse.parse_qs(self.payload)
         github_repo = self.payload.get('text').pop()
         github_repo = github_repo.rstrip('>').lstrip('<')
         user_slack_id = self.payload.get('user_id').pop()
