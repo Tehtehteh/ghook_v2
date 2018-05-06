@@ -8,4 +8,4 @@ pymysql
 requests
 aioslacker
 async_timeout
-slacker
+slacker==0.9.42

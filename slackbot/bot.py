@@ -1,7 +1,8 @@
 import logging
 import slackclient
 
-from aioslacker import Slacker
+# from aioslacker import Slacker
+from .myaioslacker import Slacker
 
 from aiohttp.web_response import Response
 
