@@ -6,7 +6,6 @@ import sqlalchemy as sa
 from aiohttp import web
 from aiohttp.web_response import json_response, Response
 
-from server.lib.request_adapter import RequestAdapter
 from slackbot.bot import SlackBot, SlackManager
 from .lib import Dispatcher
 
@@ -22,12 +21,12 @@ log = logging.getLogger('application')
 
 @SlackBot.reportable
 async def github_hook(request):
-    parsed_request = await RequestAdapter.parse(request)
-    action = parsed_request.get('action')
+    request_json = await request.json()
+    action = request_json.get('action')
     if not action:
         log.warning('Received no action in request payload.')
         return json_response({'ok': False})
-    messages = Dispatcher.dispatch_action(action, payload=parsed_request)
+    messages = Dispatcher.dispatch_action(action, payload=request_json)
     if not messages:
         return json_response({'ok': False})
     for msg in messages:
@@ -79,7 +78,7 @@ async def test_slack(request):
         log.warning('Received unknown action from GitHub: %s', parsed_request.get('action'))
         return json_response({'ok': True})
     message = action.to_slack_message()
-    dm_id = await request.app['slack_manager'].create_dm_id(slack_user_id='U7N50A3NX')  # todo danamic
+    dm_id = await request.app['slack_manager'].create_dm_id(slack_user_id='U7N50A3NX')
     error = await request.app['slack_manager'].send(channel=dm_id,
                                                     **message)
     if error:

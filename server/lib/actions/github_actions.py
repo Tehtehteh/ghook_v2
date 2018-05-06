@@ -2,7 +2,8 @@ import pytz
 
 from datetime import datetime
 
-# from .base_action import BaseAction
+from ..filters.github_filters import is_user_registered
+
 
 class GithubActionFactory(object):
 
@@ -38,11 +39,15 @@ class GithubActionFactory(object):
         else:
             return None
 
+
 class ReviewRequestedAction(object):
+
+    _filters = [is_user_registered]
 
     def __init__(self, *, github_username, github_avatar, github_username_link,
                  title, pr_url, reviewer, message, created_at, branch_from,
-                 branch_to, changed_files, additions, deletions, repo_url, color='#3ae34f'):
+                 branch_to, changed_files, additions, deletions, repo_url, color='#3ae34f',
+                 force_allowed=False):
         self.github_username = github_username
         self.github_avatar = github_avatar
         self.github_username_link = github_username_link
@@ -58,6 +63,16 @@ class ReviewRequestedAction(object):
         self.deletions = deletions
         self.attachment_color = color
         self.repo_url = repo_url
+        self.force_allowed = force_allowed
+
+    @property
+    def is_allowed(self):
+        if self.force_allowed:
+            return True
+        return self._run_filters()
+
+    def _run_filters(self):
+        return all([fn() for fn in self._filters])
 
     def to_slack_message(self, user_slack_id):
 
