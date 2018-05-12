@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from ..engine import meta
 
 
-User = sa.Table(
+user_t = sa.Table(
     'users', meta,
 
     sa.Column('id', sa.Integer),

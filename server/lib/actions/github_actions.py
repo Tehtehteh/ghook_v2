@@ -1,9 +1,11 @@
 import pytz
+import logging
 
 from datetime import datetime
 
 from ..filters.github_filters import is_user_registered
 
+log = logging.getLogger('application')
 
 class GithubActionFactory(object):
 
@@ -73,6 +75,17 @@ class ReviewRequestedAction(object):
 
     def _run_filters(self):
         return all([fn() for fn in self._filters])
+
+    def on_task_callback(self, result):
+        """
+        :param result: concurrent.futures.Future
+        :return:
+        """
+        result = result.result()
+        if result.error is not None:
+            log.error('Failed sending message to %s. Error: %s', self.reviewer['login'], result.error)
+            raise Exception(result.error)
+        log.info('Successfully sent message to %s.', self.reviewer['login'])
 
     def to_slack_message(self, user_slack_id):
 

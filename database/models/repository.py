@@ -5,7 +5,7 @@ from .domains import RepoType
 from ..engine import meta
 
 
-Repository = sa.Table(
+repository_t = sa.Table(
     'repositories', meta,
     sa.Column('subscribed_user_id', None, sa.ForeignKey('users.id')),
     sa.Column('repo_url', sa.CHAR(100)),

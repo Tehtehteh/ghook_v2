@@ -1,6 +1,7 @@
 import logging
 
 from .github_parser import GithubParser
+from .slack_parser import SlackParser
 
 ALLOWED_CONTENT_TYPES = (
     'application/json',
@@ -26,6 +27,8 @@ class ParserFactory(object):
     def get_concrete_parser(cls, request):
         if 'GitHub-Hookshot' in request.headers.get('User-Agent'):
             return GithubParser
+        if 'Slackbot' in request.headers.get('User-Agent'):
+            return SlackParser
         else:
             raise NoSuchParserExists
 

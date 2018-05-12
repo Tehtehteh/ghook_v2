@@ -1,2 +1,2 @@
-from .users import User
-from .repository import Repository
+from .users import user_t
+from .repository import repository_t

@@ -5,7 +5,7 @@ from urllib import parse
 import requests
 import sqlalchemy as sa
 
-from database import User, Repository
+from database import user_t, repository_t
 from repositories import UserRepository
 from server.pipeline import Pipelined
 from slackbot.bot import SlackBot
@@ -50,14 +50,14 @@ class Command:
         }
         if not user:
             return attach_message(msg, 'You must first register via /signin %your_github_username%')
-        repo = sa.select([Repository.c.repo_url]).where(sa.and_(Repository.c.subscribed_user_id == user.id,
-                                                                Repository.c.repo_url == github_repo.lower())).execute().fetchone()
+        repo = sa.select([repository_t.c.repo_url]).where(sa.and_(repository_t.c.subscribed_user_id == user.id,
+                                                                  repository_t.c.repo_url == github_repo.lower())).execute().fetchone()
 
         if repo:
             return attach_message(msg, f'You are already subscribed to this repository {github_repo}')
         log.info('Subscribing %s to %s', self.payload.get('user_name', []).pop(), github_repo)
 
-        Repository.insert().values({'subscribed_user_id': user.id, 'repo_url': github_repo}).execute()
+        repository_t.insert().values({'subscribed_user_id': user.id, 'repo_url': github_repo}).execute()
 
         return attach_message(msg, f'Successfully subscribed to {github_repo}', color='#47a450')
 
@@ -74,17 +74,17 @@ class Command:
 
         if not user:
             return attach_message(msg, 'You are not registered here')
-        repo = sa.select([Repository]).where(sa.and_(
-            Repository.c.subscribed_user_id == user.id,
-            Repository.c.repo_url.like(github_repo)
+        repo = sa.select([repository_t]).where(sa.and_(
+            repository_t.c.subscribed_user_id == user.id,
+            repository_t.c.repo_url.like(github_repo)
         )).execute().fetchone()
 
         if not repo:
             return attach_message(msg, f'You are not subscribed to this repository {github_repo}')
         log.info('Unsubscribe %s to %s', self.payload.get('user_name', []).pop(), github_repo)
-        Repository.delete().where(sa.and_(
-            Repository.c.subscribed_user_id == user.id,
-            Repository.c.repo_url == repo.repo_url
+        repository_t.delete().where(sa.and_(
+            repository_t.c.subscribed_user_id == user.id,
+            repository_t.c.repo_url == repo.repo_url
         )).execute()
         return attach_message(msg, f'Successfully unsubscribed from {github_repo}', color='#47a450')
 
@@ -163,8 +163,8 @@ class Command:
                 continue
             dm_id = user.slack_dm_id
 
-            repo = sa.select([Repository]).where(sa.and_(Repository.c.repo_url == repo_full_url,
-                                                         Repository.c.subscribed_user_id == user.id)).execute().fetchone()
+            repo = sa.select([repository_t]).where(sa.and_(repository_t.c.repo_url == repo_full_url,
+                                                           repository_t.c.subscribed_user_id == user.id)).execute().fetchone()
 
             if not repo:
                 log.warning('User %s is not subscribed for %s repository', github_username, repo_full_url)
@@ -173,9 +173,9 @@ class Command:
             text = f'<@{user.slack_id}>, please check PR: {pull_request_url}'
             if not dm_id:
                 dm_id = SlackBot.create_dm_id(user)
-                User.update().where(User.c.id == user.id).values(slack_dm_id=dm_id).execute()
+                user_t.update().where(user_t.c.id == user.id).values(slack_dm_id=dm_id).execute()
 
-                log.info('Successfully set new dm id for user %s', User)
+                log.info('Successfully set new dm id for user %s', user_t)
             msg = {
                 'channel': dm_id,
                 'text': text,
