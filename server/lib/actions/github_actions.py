@@ -7,6 +7,7 @@ from ..filters.github_filters import is_user_registered
 
 log = logging.getLogger('application')
 
+
 class GithubActionFactory(object):
 
     @classmethod
@@ -16,7 +17,7 @@ class GithubActionFactory(object):
 
     @classmethod
     def get_concrete_action(cls, request):
-        if request['action'] == 'review_requested':
+        if request.get('action') == 'review_requested' and request.get('reviewer'):
             params = {
                 'github_username': request['pull_request']['user']['login'],
                 'github_avatar': request['pull_request']['user']['avatar_url'] or
@@ -82,7 +83,7 @@ class ReviewRequestedAction(object):
         :return:
         """
         result = result.result()
-        if result.error is not None:
+        if result and result.error is not None:
             log.error('Failed sending message to %s. Error: %s', self.reviewer['login'], result.error)
             raise Exception(result.error)
         log.info('Successfully sent message to %s.', self.reviewer['login'])
