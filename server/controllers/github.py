@@ -40,7 +40,9 @@ async def new_github_hook(request):
     async with timeout(timeout=10) as timeout_ctx:
         parsed_request = await ParserFactory.parse(request)
         action = GithubActionFactory.create_action(parsed_request)
-
+        if not action:
+            log.warning('Unknown action received...')
+            return json_response({'ok': True}, status=404)
         user = await request.app['user_repository'].find_one(github_username=action.reviewer['login'])
         if not user:
             log.warning('Couldn\'t find user in our database with this github username: %s', action.reviewer['login'])
