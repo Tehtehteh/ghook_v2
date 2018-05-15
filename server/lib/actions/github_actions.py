@@ -40,6 +40,7 @@ class GithubActionFactory(object):
             }
             return ReviewRequestedAction(**params)
         else:
+            log.warning('Unknown action! Action: %s', request.get('action'))
             return None
 
 
