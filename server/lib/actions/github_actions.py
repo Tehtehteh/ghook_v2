@@ -17,7 +17,7 @@ class GithubActionFactory(object):
 
     @classmethod
     def get_concrete_action(cls, request):
-        if request.get('action') == 'review_requested' and request.get('reviewer'):
+        if request.get('action') == 'review_requested' and request.get('requested_reviewer'):
             params = {
                 'github_username': request['pull_request']['user']['login'],
                 'github_avatar': request['pull_request']['user']['avatar_url'] or
