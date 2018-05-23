@@ -147,3 +147,7 @@ class ReviewRequestedAction(object):
                 }
             ]
         }
+
+class ClosedAction(object):
+
+    def __init__(self, ):
