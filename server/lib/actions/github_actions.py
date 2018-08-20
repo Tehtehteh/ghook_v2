@@ -126,9 +126,9 @@ class ReviewRequestedAction(object):
             raise Exception(result.error)
         log.info('Successfully sent message to %s.', self.reviewer['login'])
 
-    def to_slack_message(self):
+    def to_slack_message(self, to_admin=False):
         text = f'Please check pull request submitted by {self.github_username}'
-        if self.slack_user_id:
+        if self.slack_user_id and not to_admin:
             text = f'<@{self.slack_user_id}>, please check pull request submitted by {self.github_username}'
         return {
             'text': text,
