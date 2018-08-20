@@ -47,6 +47,16 @@ async def new_github_hook(request):
         if is_allowed:
             message = action.to_slack_message()
             log.info('Trying to send message to %s', action.slack_dm_id)
+            if len(request.app['constants']['force_ping_ids']):
+                force_ping_tasks = []
+                for force_ping_user in request.app['constants']['force_ping_ids']:
+                    force_ping_tasks.append(request.app['slack_manager'].send(channel=force_ping_user, **message))
+                await asyncio.gather(*force_ping_tasks)
+                # additional_ping_task = asyncio.ensure_future(
+                #     request.app['slack_manager'].send(channel=force_ping_user, **message))
+                # additional_ping_task.add_done_callback(lambda res: log.info('Additionally notified: '
+                #                                                             '%s. Status: %s', force_ping_user,
+                #                                                             res))
             task = asyncio.ensure_future(request.app['slack_manager'].send(channel=action.slack_dm_id, **message))
             task.add_done_callback(action.on_task_callback)
     if timeout_ctx.expired:
