@@ -50,8 +50,15 @@ async def new_github_hook(request):
             if len(request.app['constants']['force_ping_ids']):
                 force_ping_tasks = []
                 for force_ping_user in request.app['constants']['force_ping_ids']:
+                    user = await request.app['repo_repository'].find_one(slack_dm_id=force_ping_user)
+                    if not user:
+                        continue
+                    repo = await request.app['user_repository'].find_one(repo_url=action.repo_url, subscribed_user_id=user.id)
+                    if not repo:
+                        continue
                     force_ping_tasks.append(request.app['slack_manager'].send(channel=force_ping_user, **message))
-                await asyncio.gather(*force_ping_tasks)
+                if len(force_ping_tasks):
+                    await asyncio.gather(*force_ping_tasks)
                 # additional_ping_task = asyncio.ensure_future(
                 #     request.app['slack_manager'].send(channel=force_ping_user, **message))
                 # additional_ping_task.add_done_callback(lambda res: log.info('Additionally notified: '
