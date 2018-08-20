@@ -45,7 +45,11 @@ def create_web_app(debug):
     app['constants']['gh_client_secret'] = os.environ.get('GH_CLIENT_SECRET')
     app['constants']['gh_callback_url'] = os.environ.get('GH_CALLBACK_URL')
     app['constants']['app_url'] = os.environ.get('APP_URL')
-    app['constants']['force_ping_ids'] = os.environ.get('FORCE_PING_IDS', '').split(',')
+    force_ping_ids = []
+    for force_ping_user in os.environ.get('FORCE_PING_IDS', '').split(','):
+        if force_ping_user:
+            force_ping_ids.append(force_ping_user)
+    app['constants']['force_ping_ids'] = force_ping_ids
 
     # Setting up SlackManager inside application
     app['slack_manager'] = SlackManager(token=app['constants']['slack_token'])
