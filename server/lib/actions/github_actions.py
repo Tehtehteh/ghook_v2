@@ -127,9 +127,11 @@ class ReviewRequestedAction(object):
         log.info('Successfully sent message to %s.', self.reviewer['login'])
 
     def to_slack_message(self):
-
+        text = f'Please check pull request submitted by {self.github_username}'
+        if self.slack_user_id:
+            text = f'<@{self.slack_user_id}>, please check pull request submitted by {self.github_username}'
         return {
-            'text': f'<@{self.slack_user_id}>, please check pull request submitted by {self.github_username}',
+            'text': text,
             'attachments': [
                 {
                     'color': '#0366d6',
