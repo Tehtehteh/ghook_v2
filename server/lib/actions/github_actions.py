@@ -193,7 +193,7 @@ class ReviewRequestedAction(object):
     def __init__(self, *, github_username, github_avatar, github_username_link,
                  title, pr_url, reviewer, message, created_at, branch_from,
                  branch_to, changed_files, additions, deletions, repo_url, color='#3ae34f',
-                 slack_user_id=None, slack_dm_id=None, force_allowed=False):
+                 _request_origin, slack_user_id=None, slack_dm_id=None, force_allowed=False):
         self.github_username = github_username
         self.github_avatar = github_avatar
         self.github_username_link = github_username_link
@@ -210,6 +210,7 @@ class ReviewRequestedAction(object):
         self.attachment_color = color
         self.repo_url = repo_url
         self.force_allowed = force_allowed
+        self._request_origin = _request_origin
 
         self.slack_dm_id = slack_dm_id
         self.slack_user_id = slack_user_id
