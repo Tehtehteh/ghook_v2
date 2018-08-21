@@ -130,7 +130,7 @@ class PullRequestOpenedAction(object):
         return False
 
     def to_slack_message(self):
-        text = f'Please check pull request submitted by {self.github_username}. Repo name is: *{self.repo_url}*.'
+        text = f'Please check pull request submitted by {self.github_username}. Repo name is: {self.repo_url}.'
         return {
             'text': text,
             'attachments': [
