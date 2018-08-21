@@ -41,5 +41,6 @@ class ParserFactory(object):
                 f'Such content-type header is not supported. List of supported: {str(ALLOWED_CONTENT_TYPES)}')
         parser = ParserFactory.get_concrete_parser(request)
         parsed_request = await parser.parse(request)
+        parsed_request['original_request'] = request
         log.info('Successfully parsed request')
         return parsed_request

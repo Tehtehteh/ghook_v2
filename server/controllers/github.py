@@ -41,29 +41,14 @@ async def new_github_hook(request):
         parsed_request = await ParserFactory.parse(request)
         action = GithubActionFactory.create_action(parsed_request)
         if not action:
-            log.warning('Unknown action received...')
+            log.warning('Unknown action received. Request: %s.', request)
             return json_response({'ok': True}, status=404)
         is_allowed = await action.is_allowed()
-        admin_message = action.to_slack_message()
-        if len(request.app['constants']['force_ping_ids']):
-            force_ping_tasks = []
-            for force_ping_user in request.app['constants']['force_ping_ids']:
-                user = await request.app['user_repository'].find_one(slack_dm_id=force_ping_user)
-                if not user:
-                    continue
-                repo = await request.app['repo_repository'].find_one(repo_url=action.repo_url,
-                                                                     subscribed_user_id=user.id)
-                if not repo:
-                    continue
-                force_ping_tasks.append(request.app['slack_manager'].send(channel=force_ping_user,
-                                                                          **admin_message))
-            if len(force_ping_tasks):
-                await asyncio.gather(*force_ping_tasks)
         if is_allowed:
-            regular_message = action.to_slack_message()
+            message = action.to_slack_message()
             log.info('Trying to send message to %s', action.slack_dm_id)
             task = asyncio.ensure_future(request.app['slack_manager'].send(channel=action.slack_dm_id,
-                                                                           **regular_message))
+                                                                           **message))
             task.add_done_callback(action.on_task_callback)
     if timeout_ctx.expired:
         log.warning('Timeout reached in new github hook controller.')

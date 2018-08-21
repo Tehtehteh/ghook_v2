@@ -1,4 +1,5 @@
 import os
+import asyncio
 import logging
 
 from repositories import UserRepository, RepoRepository
@@ -38,7 +39,8 @@ class GithubActionFactory(object):
                 'changed_files': request['pull_request']['changed_files'],
                 'additions': request['pull_request']['additions'],
                 'deletions': request['pull_request']['deletions'],
-                'repo_url': request['repository']['html_url']
+                'repo_url': request['repository']['html_url'],
+                '_request_origin': request['original_request'],
             }
             return ReviewRequestedAction(**params)
         if request.get('action') == 'submitted':
@@ -52,12 +54,136 @@ class GithubActionFactory(object):
                 'pull_request_url': request['pull_request']['html_url'],
                 'pull_request_title': request['pull_request']['title'],
                 'submitted_at': request['review']['submitted_at'],
-                'repo_url': request['repository']['html_url']
+                'repo_url': request['repository']['html_url'],
+                '_request_origin': request['original_request'],
             }
             return SubmitAction(**params)
+        if request.get('action') == 'opened':
+            params = {
+                'github_username': request['pull_request']['user']['login'],
+                'github_avatar': request['pull_request']['user']['avatar_url'] or
+                                 request['pull_request']['user']['gravatar_url'],
+                'github_username_link': request['pull_request']['user']['html_url'],
+                'title': request['pull_request']['title'],
+                'pr_url': request['pull_request']['html_url'],
+                'message': request['pull_request']['body'],
+                'created_at': request['pull_request']['created_at'],
+                'branch_from': request['pull_request']['head']['ref'],
+                'branch_to': request['pull_request']['base']['ref'],
+                'changed_files': request['pull_request']['changed_files'],
+                'additions': request['pull_request']['additions'],
+                'deletions': request['pull_request']['deletions'],
+                'repo_url': request['repository']['html_url'],
+                '_request_origin': request['original_request'],
+            }
+            return PullRequestOpenedAction(**params)
         else:
             log.warning('Unknown action! Action: %s', request.get('action'))
             return None
+
+
+class PullRequestOpenedAction(object):
+    def __init__(self, *, github_username, github_avatar, github_username_link,
+                 title, pr_url, message, created_at, branch_from,
+                 branch_to, changed_files, additions, deletions, repo_url,
+                 _request_origin, color='#3ae34f', slack_user_id=None,
+                 slack_dm_id=None, force_allowed=False):
+        self.github_username = github_username
+        self.github_avatar = github_avatar
+        self.github_username_link = github_username_link
+        self.title = title
+        self.pr_url = pr_url
+        self.message = message
+        self.created_at = created_at
+        self.branch_from = branch_from
+        self.branch_to = branch_to
+        self.changed_files = changed_files
+        self.additions = additions
+        self.deletions = deletions
+        self.attachment_color = color
+        self.repo_url = repo_url
+        self._request_origin = _request_origin
+        self.force_allowed = force_allowed
+
+        self.slack_dm_id = slack_dm_id
+        self.slack_user_id = slack_user_id
+
+    async def is_allowed(self):
+        # if self.force_allowed:
+        #     return True
+        if len(self._request_origin.app['constants']['force_ping_ids']):
+            force_ping_users = self._request_origin.app['constants']['force_ping_ids']
+            force_ping_tasks = []
+            for force_ping_user in force_ping_users:
+                user = await UserRepository().find_one(slack_dm_id=force_ping_user)
+                if not user:
+                    continue
+                repo = await RepoRepository().find_one(repo_url=self.repo_url,
+                                                       subscribed_user_id=user.id)
+                if not repo:
+                    continue
+                force_ping_tasks.append(self._request_origin.app['slack_manager'].send(channel=force_ping_user,
+                                                                                       **self.to_slack_message()))
+            if len(force_ping_tasks):
+                # Messy :0
+                await asyncio.gather(*force_ping_tasks)
+        return False
+
+    def to_slack_message(self):
+        text = f'Please check pull request submitted by {self.github_username}'
+        return {
+            'text': text,
+            'attachments': [
+                {
+                    'color': '#0366d6',
+                    'fields': [
+                        {
+                            'title': 'From branch',
+                            'value': self.branch_from,
+                            'short': True
+                        },
+                        {
+                            'title': 'To branch',
+                            'value': self.branch_to,
+                            'short': True
+                        }
+                    ],
+                },
+                {
+                    'color': '#ffed63',
+                    'title': 'Short info',
+                    'fields': [
+                        {
+                            'title': 'Files changed',
+                            'value': self.changed_files,
+                            'short': True
+                        },
+                        {
+                            'title': 'Additions',
+                            'value': self.additions,
+                            'short': True
+                        },
+                        {
+                            'title': 'Deletions',
+                            'value': self.deletions,
+                            'short': True
+                        },
+                    ],
+                },
+                {
+                    'color': self.attachment_color,
+                    'attachment_type': 'default',
+                    'author_name': self.github_username,
+                    'author_link': self.github_username_link,
+                    'author_icon': self.github_avatar,
+                    'title': self.title,
+                    'title_link': self.pr_url,
+                    'text': self.message,
+                    'footer': 'check \'em!',
+                    'ts': parse_dtm(self.created_at)
+                }
+            ]
+        }
 
 
 class ReviewRequestedAction(object):
