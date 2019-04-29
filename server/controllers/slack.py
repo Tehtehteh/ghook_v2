@@ -36,6 +36,12 @@ async def gsign_command(request):
     return json_response({'ok': True})
 
 
+async def repository_list(request):
+    parsed_request = await ParserFactory.parse(request)
+    action = SlackActionFactory.create_action(parsed_request)
+
+
+
 @SlackBot.reportable
 async def slack_command(request):
     action = request.match_info.get('slack_command', None)

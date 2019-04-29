@@ -3,7 +3,6 @@ import logging
 
 from aiohttp import web
 
-
 from database import create_database
 from server import create_web_app
 from slackbot.bot import SlackBot
@@ -14,11 +13,7 @@ log.setLevel(logging.DEBUG)
 
 
 def main():
-    token = os.environ.get('SLACK_TOKEN')
-    port = os.environ.get('PORT', 8080)
-    if not token:
-        log.error('Please provide slack token to use this bot')
-        exit(1)
+    from server.lib.utils import read_env
     debug = os.environ.get('DEBUG', False)
     if isinstance(debug, str):
         if debug.isdigit():
@@ -26,6 +21,13 @@ def main():
         else:
             debug = debug.lower() != 'false'
     mode = 'development' if debug else 'production'
+    if mode == 'development':
+        read_env('.env')
+    token = os.environ.get('SLACK_TOKEN')
+    port = os.environ.get('PORT', 8080)
+    if not token:
+        log.error('Please provide slack token to use this bot')
+        exit(1)
     log.info('Launching application is %s mode.', mode)
 
     SlackBot.init(token)

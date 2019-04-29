@@ -26,6 +26,16 @@ class SlackActionFactory(object):
             raise Exception(f'Unknown slack command. Request: {request}')
 
 
+class RepositoryListAction(object):
+    def __init__(self, *, user_id, response_url, channel_id):
+        self.user_id = user_id
+        self.response_url = response_url
+        self.channel_id = channel_id
+
+    def to_slack_message(self):
+        attachments = None
+
+
 class GHSignInAction(object):
 
     def __init__(self, *, user_id, response_url, username, channel_id):
